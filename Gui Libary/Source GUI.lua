@@ -1007,9 +1007,16 @@ function DeltaLib:CreateWindow(title, size)
             end
             
             function Section:AddDropdown(dropdownText, options, default, callback)
+    -- Validate inputs with fallbacks
     options = options or {}
     default = default or options[1] or ""
-    callback = SafeCall(callback) or function() end
+    callback = type(callback) == "function" and callback or function() end
+
+    -- Ensure default exists in options
+    if not table.find(options, default) then
+        default = options[1] or ""
+        warn("Default value not in options, using first item")
+    end
 
     -- Main dropdown container
     local dropdownFrame = Create("Frame", {
@@ -1017,20 +1024,9 @@ function DeltaLib:CreateWindow(title, size)
         Size = UDim2.new(1, 0, 0, 40),
         BackgroundTransparency = 1,
         Parent = SectionContent
-    }, {
-        Create("TextLabel", {
-            Name = "DropdownLabel",
-            Size = UDim2.new(1, 0, 0, 20),
-            BackgroundTransparency = 1,
-            Text = dropdownText,
-            TextColor3 = Colors.Text,
-            TextSize = 14,
-            Font = Enum.Font.Gotham,
-            TextXAlignment = Enum.TextXAlignment.Left
-        })
     })
 
-    -- Main dropdown button
+    -- Dropdown button with safe element creation
     local dropdownButton = Create("TextButton", {
         Name = "DropdownButton",
         Size = UDim2.new(1, 0, 0, 25),
@@ -1067,7 +1063,7 @@ function DeltaLib:CreateWindow(title, size)
         })
     })
 
-    -- Options container
+    -- Options container with safe parenting
     local optionsContainer = Create("Frame", {
         Name = "DropdownOptionsContainer",
         Size = UDim2.new(1, 0, 0, 0),
@@ -1097,29 +1093,46 @@ function DeltaLib:CreateWindow(title, size)
         })
     })
 
-    -- Parent elements
-    optionsContainer.Parent = dropdownButton
-    dropdownButton.Parent = dropdownFrame
-
-    local isOpen = false
-    local optionButtons = {}
-
-    -- Toggle animation function
-    local function toggleDropdown()
-        isOpen = not isOpen
-        local targetHeight = math.min(#options * 30 + 10, 120)
-        
-        tween(dropdownArrow, 0.5, {Rotation = isOpen and 90 or 270})
-        tween(optionsContainer, 0.5, {
-            Size = isOpen and UDim2.new(1, 0, 0, targetHeight) or UDim2.new(1, 0, 0, 0)
-        })
-        tween(dropdownButton, 0.5, {
-            Size = isOpen and UDim2.new(1, 0, 0, 25 + targetHeight) or UDim2.new(1, 0, 0, 25)
-        })
+    -- Safe parenting checks
+    if optionsContainer and dropdownButton then
+        optionsContainer.Parent = dropdownButton
+    end
+    if dropdownButton and dropdownFrame then
+        dropdownButton.Parent = dropdownFrame
     end
 
-    -- Create option buttons
+    -- Toggle animation with safe tweening
+    local function toggleDropdown()
+        local isOpen = false
+        return function()
+            isOpen = not isOpen
+            local targetHeight = math.min(#options * 30 + 10, 120)
+            
+            SafeCall(function()
+                local arrow = dropdownButton:FindFirstChild("DropdownArrow")
+                if arrow then
+                    TweenService:Create(arrow, TweenInfo.new(0.5), {
+                        Rotation = isOpen and 90 or 270
+                    }):Play()
+                end
+                
+                if optionsContainer then
+                    TweenService:Create(optionsContainer, TweenInfo.new(0.5), {
+                        Size = isOpen and UDim2.new(1, 0, 0, targetHeight) or UDim2.new(1, 0, 0, 0)
+                    }):Play()
+                end
+                
+                TweenService:Create(dropdownButton, TweenInfo.new(0.5), {
+                    Size = isOpen and UDim2.new(1, 0, 0, 25 + targetHeight) or UDim2.new(1, 0, 0, 25)
+                }):Play()
+            end)
+        end
+    end
+
+    -- Create options with validation
     local function createOption(option, index)
+        if not option then return end
+        
         local btn = Create("TextButton", {
             Size = UDim2.new(1, 0, 0, 25),
             BackgroundColor3 = Colors.DarkBackground,
@@ -1133,7 +1146,7 @@ function DeltaLib:CreateWindow(title, size)
                 Size = UDim2.new(1, -10, 1, 0),
                 Position = UDim2.new(0, 10, 0, 0),
                 BackgroundTransparency = 1,
-                Text = option,
+                Text = tostring(option),
                 TextColor3 = Colors.Text,
                 TextSize = 14,
                 Font = Enum.Font.Gotham,
@@ -1141,77 +1154,78 @@ function DeltaLib:CreateWindow(title, size)
             })
         })
 
-        -- Hover effects
-        SafeConnect(btn.MouseEnter, function()
-            tween(btn, 0.2, {BackgroundColor3 = Colors.NeonRed})
-        end)
-        
-        SafeConnect(btn.MouseLeave, function()
-            tween(btn, 0.2, {BackgroundColor3 = Colors.DarkBackground})
-        end)
-
-        -- Selection handler
+        -- Safe click handling
         SafeConnect(btn.MouseButton1Click, function()
-            dropdownButton.SelectedTextBox.Text = option
-            toggleDropdown()
-            callback(option)
+            SafeCall(function()
+                local textBox = dropdownButton:FindFirstChild("SelectedTextBox")
+                if textBox then
+                    textBox.Text = tostring(option)
+                    callback(option)
+                end
+                toggleDropdown()()
+            end)
         end)
 
         return btn
     end
 
-    -- Initialize options
+    -- Initialize options safely
     local function refreshOptions(newOptions)
-        options = newOptions or options
+        options = newOptions or {}
         optionButtons = {}
 
-        -- Clear existing options
-        for _, child in pairs(optionsContainer.DropdownScrollFrame:GetChildren()) do
-            if child:IsA("TextButton") then
-                SafeDestroy(child)
+        -- Clear old options safely
+        if optionsContainer and optionsContainer:FindFirstChild("DropdownScrollFrame") then
+            for _, child in pairs(optionsContainer.DropdownScrollFrame:GetChildren()) do
+                if child:IsA("TextButton") then
+                    SafeDestroy(child)
+                end
             end
         end
 
         -- Create new options
-        for i, option in ipairs(options) do
-            local btn = createOption(option, i)
-            btn.Parent = optionsContainer.DropdownScrollFrame
-            table.insert(optionButtons, btn)
+        if #options > 0 then
+            for i, option in ipairs(options) do
+                local btn = createOption(option, i)
+                if btn and optionsContainer and optionsContainer:FindFirstChild("DropdownScrollFrame") then
+                    btn.Parent = optionsContainer.DropdownScrollFrame
+                end
+            end
         end
 
-        -- Update canvas size
-        optionsContainer.DropdownScrollFrame.CanvasSize = UDim2.new(
-            0, 0, 
-            0, optionsContainer.DropdownScrollFrame.UIListLayout.AbsoluteContentSize.Y + 10
-        )
+        -- Update canvas size safely
+        SafeCall(function()
+            if optionsContainer and optionsContainer.DropdownScrollFrame then
+                optionsContainer.DropdownScrollFrame.CanvasSize = UDim2.new(
+                    0, 0, 
+                    0, optionsContainer.DropdownScrollFrame.UIListLayout.AbsoluteContentSize.Y + 10
+                )
+            end
+        end)
     end
 
     -- Initial setup
     refreshOptions(options)
 
-    -- Toggle handler
-    SafeConnect(dropdownButton.MouseButton1Click, toggleDropdown)
+    -- Toggle handler with existence check
+    SafeConnect(dropdownButton.MouseButton1Click, toggleDropdown())
 
-    -- Close when clicking outside
-    SafeConnect(UserInputService.InputBegan, function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            if isOpen and not dropdownButton:IsDescendantOf(Mouse.Target) then
-                toggleDropdown()
-            end
-        end
-    end)
-
-    -- Return control functions
+    -- Return control API
     return {
         SetValue = function(value)
             if table.find(options, value) then
-                dropdownButton.SelectedTextBox.Text = value
-                callback(value)
+                SafeCall(function()
+                    local textBox = dropdownButton:FindFirstChild("SelectedTextBox")
+                    if textBox then
+                        textBox.Text = value
+                        callback(value)
+                    end
+                end)
             end
         end,
         
         GetValue = function()
-            return dropdownButton.SelectedTextBox.Text
+            return dropdownButton:FindFirstChild("SelectedTextBox") and dropdownButton.SelectedTextBox.Text or ""
         end,
         
         Refresh = function(newOptions)
@@ -1233,6 +1247,108 @@ end
                 TextBoxContainer.Parent = SectionContent
                 
                 local TextBoxLabel = Instance.new("TextLabel")
+                TextBoxLabel.Name = "TextBoxLabel"
+                TextBoxLabel.Size = UDim2.new(1, 0, 0, 16) -- Smaller label
+                TextBoxLabel.BackgroundTransparency = 1
+                TextBoxLabel.Text = boxText
+                TextBoxLabel.TextColor3 = Colors.Text
+                TextBoxLabel.TextSize = 12 -- Smaller text size
+                TextBoxLabel.Font = Enum.Font.Gotham
+                TextBoxLabel.TextXAlignment = Enum.TextXAlignment.Left
+                TextBoxLabel.Parent = TextBoxContainer
+                
+                local TextBox = Instance.new("TextBox")
+                TextBox.Name = "TextBox"
+                TextBox.Size = UDim2.new(1, 0, 0, 20) -- Smaller textbox
+                TextBox.Position = UDim2.new(0, 0, 0, 16)
+                TextBox.BackgroundColor3 = Colors.DarkBackground
+                TextBox.BorderSizePixel = 0
+                TextBox.PlaceholderText = placeholder
+                TextBox.Text = default
+                TextBox.TextColor3 = Colors.Text
+                TextBox.PlaceholderColor3 = Colors.SubText
+                TextBox.TextSize = 12 -- Smaller text size
+                TextBox.Font = Enum.Font.Gotham
+                TextBox.TextXAlignment = Enum.TextXAlignment.Left
+                TextBox.ClearTextOnFocus = false
+                TextBox.Parent = TextBoxContainer
+                
+                local TextBoxPadding = Instance.new("UIPadding")
+                TextBoxPadding.PaddingLeft = UDim.new(0, 8) -- Smaller padding
+                TextBoxPadding.Parent = TextBox
+                
+                local TextBoxCorner = Instance.new("UICorner")
+                TextBoxCorner.CornerRadius = UDim.new(0, 3) -- Smaller corner radius
+                TextBoxCorner.Parent = TextBox
+                
+                -- TextBox Logic with error handling
+                SafeConnect(TextBox.Focused, function()
+                    pcall(function()
+                        TweenService:Create(TextBox, TweenInfo.new(0.2), {BorderSizePixel = 1, BorderColor3 = Colors.NeonRed}):Play()
+                    end)
+                end)
+                
+                SafeConnect(TextBox.FocusLost, function(enterPressed)
+                    pcall(function()
+                        TweenService:Create(TextBox, TweenInfo.new(0.2), {BorderSizePixel = 0}):Play()
+                        SafeCall(callback, TextBox.Text, enterPressed)
+                    end)
+                end)
+                
+                local TextBoxFunctions = {}
+                
+                function TextBoxFunctions:SetText(text)
+                    pcall(function()
+                        TextBox.Text = text
+                        SafeCall(callback, text, false)
+                    end)
+                end
+                
+                function TextBoxFunctions:GetText()
+                    return TextBox.Text
+                end
+                
+                return TextBoxFunctions
+            end
+            
+            return Section
+        end
+        
+        return Tab
+    end
+    
+    -- Add User Profile Section with error handling
+    function Window:AddUserProfile(displayName)
+        displayName = displayName or Player.DisplayName
+        
+        -- Update username label
+        pcall(function()
+            UsernameLabel.Text = displayName
+        end)
+        
+        -- Create a function to update the avatar
+        local function UpdateAvatar(userId)
+            pcall(function()
+                AvatarImage.Image = GetPlayerAvatar(userId or Player.UserId, "100x100")
+            end)
+        end
+        
+        return {
+            SetDisplayName = function(name)
+                pcall(function()
+                    UsernameLabel.Text = name
+                end)
+            end,
+            UpdateAvatar = UpdateAvatar
+        }
+    end
+    
+    return Window
+end
+
+-- Return the library
+return DeltaLib
+Label = Instance.new("TextLabel")
                 TextBoxLabel.Name = "TextBoxLabel"
                 TextBoxLabel.Size = UDim2.new(1, 0, 0, 16) -- Smaller label
                 TextBoxLabel.BackgroundTransparency = 1
