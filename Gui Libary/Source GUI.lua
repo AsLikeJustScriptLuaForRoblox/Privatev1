@@ -21,7 +21,7 @@ local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local TextService = game:GetService("TextService")
-local CoreGui = game:GetService("CoreGui"        )
+local CoreGui = game:GetService("CoreGui")
 
 -- Error handling utility function
 local function SafeCall(func, ...)
@@ -1218,21 +1218,19 @@ function DeltaLib:CreateWindow(title, size)
               
               return SliderFunctions
           end
-          
-          -- Dropdown Creation Function - Improved with features from the provided code
           function Section:AddDropdown(dropdownText, options, default, callback)
     local DropdownFunctions = {}
     options = options or {}
     default = default or options[1] or ""
     callback = callback or function() end
-    
+
     -- Create the main dropdown container
     local DropdownContainer = Instance.new("Frame")
     DropdownContainer.Name = "DropdownContainer"
     DropdownContainer.Size = UDim2.new(1, 0, 0, 40)
     DropdownContainer.BackgroundTransparency = 1
     DropdownContainer.Parent = SectionContent
-    
+
     -- Create the dropdown label
     local DropdownLabel = Instance.new("TextLabel")
     DropdownLabel.Name = "DropdownLabel"
@@ -1244,10 +1242,12 @@ function DeltaLib:CreateWindow(title, size)
     DropdownLabel.Font = Enum.Font.Gotham
     DropdownLabel.TextXAlignment = Enum.TextXAlignment.Left
     DropdownLabel.Parent = DropdownContainer
-    
-    -- Register for text scaling
-    RegisterTextElement(DropdownLabel)
-    
+
+    -- Register for text scaling if function exists
+    if RegisterTextElement then
+        RegisterTextElement(DropdownLabel)
+    end
+
     -- Create the main dropdown button
     local DropdownButton = Instance.new("TextButton")
     DropdownButton.Name = "DropdownButton"
@@ -1258,19 +1258,19 @@ function DeltaLib:CreateWindow(title, size)
     DropdownButton.Text = ""
     DropdownButton.ClipsDescendants = true
     DropdownButton.Parent = DropdownContainer
-    
+
     -- Add rounded corners to the dropdown button
     local DropdownButtonCorner = Instance.new("UICorner")
     DropdownButtonCorner.CornerRadius = UDim.new(0, 4)
     DropdownButtonCorner.Parent = DropdownButton
-    
+
     -- Add a stroke to the dropdown button
     local DropdownButtonStroke = Instance.new("UIStroke")
     DropdownButtonStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     DropdownButtonStroke.Color = Colors.Border
     DropdownButtonStroke.Thickness = 1
     DropdownButtonStroke.Parent = DropdownButton
-    
+
     -- Create the textbox for displaying the selected value
     local SelectedTextBox = Instance.new("TextBox")
     SelectedTextBox.Name = "SelectedTextBox"
@@ -1286,10 +1286,12 @@ function DeltaLib:CreateWindow(title, size)
     SelectedTextBox.ClearTextOnFocus = false
     SelectedTextBox.TextEditable = false
     SelectedTextBox.Parent = DropdownButton
-    
-    -- Register for text scaling
-    RegisterTextElement(SelectedTextBox)
-    
+
+    -- Register for text scaling if function exists
+    if RegisterTextElement then
+        RegisterTextElement(SelectedTextBox)
+    end
+
     -- Create the dropdown arrow icon
     local DropdownArrow = Instance.new("ImageLabel")
     DropdownArrow.Name = "DropdownArrow"
@@ -1300,7 +1302,7 @@ function DeltaLib:CreateWindow(title, size)
     DropdownArrow.ImageColor3 = Colors.NeonRed
     DropdownArrow.Rotation = 270
     DropdownArrow.Parent = DropdownButton
-    
+
     -- Create the container for dropdown options
     local DropdownOptionsContainer = Instance.new("Frame")
     DropdownOptionsContainer.Name = "DropdownOptionsContainer"
@@ -1309,7 +1311,7 @@ function DeltaLib:CreateWindow(title, size)
     DropdownOptionsContainer.BackgroundTransparency = 1
     DropdownOptionsContainer.ClipsDescendants = true
     DropdownOptionsContainer.Parent = DropdownButton
-    
+
     -- Create the scrolling frame for options
     local DropdownScrollFrame = Instance.new("ScrollingFrame")
     DropdownScrollFrame.Name = "DropdownScrollFrame"
@@ -1323,13 +1325,13 @@ function DeltaLib:CreateWindow(title, size)
     DropdownScrollFrame.TopImage = ""
     DropdownScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
     DropdownScrollFrame.Parent = DropdownOptionsContainer
-    
+
     -- Add layout for the options
     local DropdownOptionsLayout = Instance.new("UIListLayout")
     DropdownOptionsLayout.SortOrder = Enum.SortOrder.LayoutOrder
     DropdownOptionsLayout.Padding = UDim.new(0, 5)
     DropdownOptionsLayout.Parent = DropdownScrollFrame
-    
+
     -- Add padding for the options
     local DropdownOptionsPadding = Instance.new("UIPadding")
     DropdownOptionsPadding.PaddingLeft = UDim.new(0, 5)
@@ -1337,16 +1339,19 @@ function DeltaLib:CreateWindow(title, size)
     DropdownOptionsPadding.PaddingTop = UDim.new(0, 5)
     DropdownOptionsPadding.PaddingBottom = UDim.new(0, 5)
     DropdownOptionsPadding.Parent = DropdownScrollFrame
-    
+
     -- Track dropdown state
     local isOpen = false
-    
+    local isAnimating = false -- Add this to prevent multiple clicks during animation
+
     -- Function to toggle the dropdown
     local function ToggleDropdown()
+        if isAnimating then return end -- Prevent multiple clicks during animation
+        isAnimating = true
         isOpen = not isOpen
         
         -- Animate the dropdown arrow
-        TweenService:Create(DropdownArrow, TweenInfo.new(0.5), {
+        TweenService:Create(DropdownArrow, TweenInfo.new(0.3), {
             Rotation = isOpen and 90 or 270
         }):Play()
         
@@ -1359,50 +1364,66 @@ function DeltaLib:CreateWindow(title, size)
         if isOpen then
             -- Calculate height based on number of options (max 120px)
             local optionsHeight = math.min(#options * 30 + 10, 120)
-            DropdownOptionsContainer:TweenSize(
-                UDim2.new(1, 0, 0, optionsHeight),
-                Enum.EasingDirection.Out,
-                Enum.EasingStyle.Quart,
-                0.5,
-                true
+            
+            -- Create and start the tween
+            local containerTween = TweenService:Create(
+                DropdownOptionsContainer, 
+                TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), 
+                {Size = UDim2.new(1, 0, 0, optionsHeight)}
             )
-            DropdownButton:TweenSize(
-                UDim2.new(1, 0, 0, 25 + optionsHeight),
-                Enum.EasingDirection.Out,
-                Enum.EasingStyle.Quart,
-                0.5,
-                true
+            
+            local buttonTween = TweenService:Create(
+                DropdownButton, 
+                TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), 
+                {Size = UDim2.new(1, 0, 0, 25 + optionsHeight)}
             )
+            
+            containerTween:Play()
+            buttonTween:Play()
+            
+            -- Use Completed event to track when animation is done
+            buttonTween.Completed:Connect(function()
+                isAnimating = false
+                
+                -- Update section size after animation
+                if SectionContainer and bg then
+                    SectionContainer.Size = UDim2.new(1, 0, 0, sectionSize(bg))
+                    bg.Size = UDim2.new(1, 0, 0, sectionSize(bg) + 30)
+                end
+            end)
         else
-            DropdownOptionsContainer:TweenSize(
-                UDim2.new(1, 0, 0, 0),
-                Enum.EasingDirection.Out,
-                Enum.EasingStyle.Quart,
-                0.5,
-                true
+            -- Create and start the tween for closing
+            local containerTween = TweenService:Create(
+                DropdownOptionsContainer, 
+                TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), 
+                {Size = UDim2.new(1, 0, 0, 0)}
             )
-            DropdownButton:TweenSize(
-                UDim2.new(1, 0, 0, 25),
-                Enum.EasingDirection.Out,
-                Enum.EasingStyle.Quart,
-                0.5,
-                true
+            
+            local buttonTween = TweenService:Create(
+                DropdownButton, 
+                TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), 
+                {Size = UDim2.new(1, 0, 0, 25)}
             )
+            
+            containerTween:Play()
+            buttonTween:Play()
+            
+            -- Use Completed event to track when animation is done
+            buttonTween.Completed:Connect(function()
+                isAnimating = false
+                
+                -- Update section size after animation
+                if SectionContainer and bg then
+                    SectionContainer.Size = UDim2.new(1, 0, 0, sectionSize(bg))
+                    bg.Size = UDim2.new(1, 0, 0, sectionSize(bg) + 30)
+                end
+            end)
         end
-        
-        -- Update section size after animation
-        spawn(function()
-            wait(0.5)
-            if SectionContainer and bg then
-                SectionContainer.Size = UDim2.new(1, 0, 0, sectionSize(bg))
-                bg.Size = UDim2.new(1, 0, 0, sectionSize(bg) + 30)
-            end
-        end)
     end
-    
+
     -- Store option buttons
     local OptionButtons = {}
-    
+
     -- Function to create an option button
     local function CreateOptionButton(option, index)
         local OptionButton = Instance.new("TextButton")
@@ -1430,8 +1451,10 @@ function DeltaLib:CreateWindow(title, size)
         OptionText.TextXAlignment = Enum.TextXAlignment.Left
         OptionText.Parent = OptionButton
         
-        -- Register for text scaling
-        RegisterTextElement(OptionText)
+        -- Register for text scaling if function exists
+        if RegisterTextElement then
+            RegisterTextElement(OptionText)
+        end
         
         -- Add hover effects
         OptionButton.MouseEnter:Connect(function()
@@ -1460,7 +1483,7 @@ function DeltaLib:CreateWindow(title, size)
         
         return OptionButton
     end
-    
+
     -- Create initial options
     for i, option in ipairs(options) do
         local optionButton = CreateOptionButton(option, i)
@@ -1469,52 +1492,33 @@ function DeltaLib:CreateWindow(title, size)
         -- Update canvas size
         DropdownScrollFrame.CanvasSize = UDim2.new(0, 0, 0, DropdownOptionsLayout.AbsoluteContentSize.Y + 10)
     end
-    
+
     -- Toggle dropdown when clicking the button
     DropdownButton.MouseButton1Click:Connect(ToggleDropdown)
-    
-    -- Close dropdown when clicking elsewhere
-    UserInputService.InputBegan:Connect(function(input)
+
+    -- Create a separate connection for global click detection
+    local globalClickConnection
+    globalClickConnection = UserInputService.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             local mousePos = UserInputService:GetMouseLocation()
-            if isOpen and not (mousePos.X >= DropdownButton.AbsolutePosition.X and 
+            local inDropdown = (mousePos.X >= DropdownButton.AbsolutePosition.X and 
                               mousePos.X <= DropdownButton.AbsolutePosition.X + DropdownButton.AbsoluteSize.X and
                               mousePos.Y >= DropdownButton.AbsolutePosition.Y and 
-                              mousePos.Y <= DropdownButton.AbsolutePosition.Y + DropdownButton.AbsoluteSize.Y) then
-                isOpen = false
-                DropdownOptionsContainer:TweenSize(
-                    UDim2.new(1, 0, 0, 0),
-                    Enum.EasingDirection.Out,
-                    Enum.EasingStyle.Quart,
-                    0.5,
-                    true
-                )
-                DropdownButton:TweenSize(
-                    UDim2.new(1, 0, 0, 25),
-                    Enum.EasingDirection.Out,
-                    Enum.EasingStyle.Quart,
-                    0.5,
-                    true
-                )
-                TweenService:Create(DropdownArrow, TweenInfo.new(0.5), {
-                    Rotation = 270
-                }):Play()
-                TweenService:Create(DropdownButtonStroke, TweenInfo.new(0.3), {
-                    Color = Colors.Border
-                }):Play()
-                
-                -- Update section size after animation
-                spawn(function()
-                    wait(0.5)
-                    if SectionContainer and bg then
-                        SectionContainer.Size = UDim2.new(1, 0, 0, sectionSize(bg))
-                        bg.Size = UDim2.new(1, 0, 0, sectionSize(bg) + 30)
-                    end
-                end)
+                              mousePos.Y <= DropdownButton.AbsolutePosition.Y + DropdownButton.AbsoluteSize.Y)
+            
+            if isOpen and not inDropdown and not isAnimating then
+                ToggleDropdown()
             end
         end
     end)
-    
+
+    -- Clean up connection when dropdown is destroyed
+    DropdownContainer.AncestryChanged:Connect(function(_, parent)
+        if not parent then
+            globalClickConnection:Disconnect()
+        end
+    end)
+
     -- Add hover effect for the dropdown button
     DropdownButton.MouseEnter:Connect(function()
         if not isOpen then
@@ -1523,7 +1527,7 @@ function DeltaLib:CreateWindow(title, size)
             }):Play()
         end
     end)
-    
+
     DropdownButton.MouseLeave:Connect(function()
         if not isOpen then
             TweenService:Create(DropdownButtonStroke, TweenInfo.new(0.3), {
@@ -1531,7 +1535,7 @@ function DeltaLib:CreateWindow(title, size)
             }):Play()
         end
     end)
-    
+
     -- Function to set the dropdown value
     function DropdownFunctions:SetValue(value)
         if table.find(options, value) then
@@ -1539,12 +1543,12 @@ function DeltaLib:CreateWindow(title, size)
             callback(value)
         end
     end
-    
+
     -- Function to get the current dropdown value
     function DropdownFunctions:GetValue()
         return SelectedTextBox.Text
     end
-    
+
     -- Function to refresh the dropdown options
     function DropdownFunctions:Refresh(newOptions, newDefault)
         options = newOptions or options
@@ -1569,7 +1573,7 @@ function DeltaLib:CreateWindow(title, size)
         
         -- Set default value
         SelectedTextBox.Text = default
-
+        
         -- If dropdown is open, update its size
         if isOpen then
             local optionsHeight = math.min(#options * 30 + 10, 120)
@@ -1583,15 +1587,17 @@ function DeltaLib:CreateWindow(title, size)
             bg.Size = UDim2.new(1, 0, 0, sectionSize(bg) + 30)
         end
     end
-    
+
     -- Update section size
     if SectionContainer and bg then
         SectionContainer.Size = UDim2.new(1, 0, 0, sectionSize(bg))
         bg.Size = UDim2.new(1, 0, 0, sectionSize(bg) + 30)
     end
-    
+
     return DropdownFunctions
 end
+          
+          -- TextBox Creation Function
           function Section:AddTextBox(boxText, placeholder, default, callback)
               placeholder = placeholder or ""
               default = default or ""
