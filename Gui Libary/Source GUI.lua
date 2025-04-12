@@ -1,12 +1,12 @@
 -- DeltaLib UI Library - Improved with error handling and smaller UI
 local DeltaLib = {}
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local Players = game:GetService("Players")
+local UserInputService = cloneref(game:GetService("UserInputService")) 
+local TweenService = cloneref(game:GetService("TweenService")) 
+local Players = cloneref(game:GetService("Players")) 
 local Player = Players.LocalPlayer
-local RunService = game:GetService("RunService")
-local TextService = game:GetService("TextService")
-local CoreGui = game:GetService("CoreGui")
+local RunService = cloneref(game:GetService("RunService")) 
+local TextService = cloneref(game:GetService("TextService")) 
+local CoreGui = cloneref(game:GetService("CoreGui")) 
 
 -- Helper functions for error handling
 local function SafeCall(func, ...)
