@@ -248,7 +248,7 @@ function DeltaLib:CreateWindow(title, size)
 	MinimizeButton.Size = UDim2.new(0, 20, 0, 20) -- Smaller button
 	MinimizeButton.Position = UDim2.new(1, -45, 0, 2) -- Position it to the left of the close button
 	MinimizeButton.BackgroundTransparency = 1
-	MinimizeButton.Text = "ÃƒÂ¢Ã‹â€ Ã¢â‚¬â„¢" -- Minus symbol
+	MinimizeButton.Text = "-" -- Minus symbol
 	MinimizeButton.TextColor3 = Colors.Text
 	MinimizeButton.TextSize = 14 -- Smaller text size
 	MinimizeButton.Font = Enum.Font.GothamBold
@@ -268,12 +268,7 @@ function DeltaLib:CreateWindow(title, size)
 	CloseButton.Size = UDim2.new(0, 20, 0, 20) -- Smaller button
 	CloseButton.Position = UDim2.new(1, -22, 0, 2)
 	CloseButton.BackgroundTransparency = 1
-	CloseButton.Text = ""
-local CloseIcon = Instance.new("ImageLabel")
-CloseIcon.Size = UDim2.new(1, 0, 1, 0)
-CloseIcon.BackgroundTransparency = 1
-CloseIcon.Image = "rbxassetid://6035047370" 
-CloseIcon.Parent = CloseButton
+	CloseButton.Text = "X"
 	CloseButton.TextColor3 = Colors.Text
 	CloseButton.TextSize = 14 -- Smaller text size
 	CloseButton.Font = Enum.Font.GothamBold
@@ -310,12 +305,7 @@ CloseIcon.Parent = CloseButton
 	LeftScrollButton.Position = UDim2.new(0, 0, 0, 0)
 	LeftScrollButton.BackgroundColor3 = Colors.DarkBackground
 	LeftScrollButton.BorderSizePixel = 0
-	LeftScrollButton.Text = ""
-local LeftIcon = Instance.new("ImageLabel")
-LeftIcon.Size = UDim2.new(1, 0, 1, 0)
-LeftIcon.BackgroundTransparency = 1
-LeftIcon.Image = "rbxassetid://6035047376" -- Left arrow
-LeftIcon.Parent = LeftScrollButton
+	LeftScrollButton.Text = "<"
 	LeftScrollButton.TextColor3 = Colors.Text
 	LeftScrollButton.TextSize = 14 -- Smaller text size
 	LeftScrollButton.Font = Enum.Font.GothamBold
@@ -329,12 +319,7 @@ LeftIcon.Parent = LeftScrollButton
 	RightScrollButton.Position = UDim2.new(1, -20, 0, 0)
 	RightScrollButton.BackgroundColor3 = Colors.DarkBackground
 	RightScrollButton.BorderSizePixel = 0
-	RightScrollButton.Text = ""
-local RightIcon = Instance.new("ImageLabel")
-RightIcon.Size = UDim2.new(1, 0, 1, 0)
-RightIcon.BackgroundTransparency = 1
-RightIcon.Image = "rbxassetid://6035047384" -- Right arrow
-RightIcon.Parent = RightScrollButton
+	RightScrollButton.Text = ">"
 	RightScrollButton.TextColor3 = Colors.Text
 	RightScrollButton.TextSize = 14 -- Smaller text size
 	RightScrollButton.Font = Enum.Font.GothamBold
@@ -534,12 +519,7 @@ RightIcon.Parent = RightScrollButton
 			end)
 
 			-- Change restore button back to minimize symbol
-			MinimizeButton.Text = ""
-local MinimizeIcon = Instance.new("ImageLabel")
-MinimizeIcon.Size = UDim2.new(1, 0, 1, 0)
-MinimizeIcon.BackgroundTransparency = 1
-MinimizeIcon.Image = "rbxassetid://6035047409" -- Minus icon
-MinimizeIcon.Parent = MinimizeButton
+			MinimizeButton.Text = "Ã¢Ë†â€™"
 		end
 	end)
 
