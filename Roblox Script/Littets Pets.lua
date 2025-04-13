@@ -47,7 +47,7 @@ Info:AddLabel("Place ID: " .. game.PlaceId)
 Info:AddLabel("Username: " .. Player.Name)
 Info:AddLabel("Display Name: " .. Player.DisplayName)
 Info:AddLabel("User ID: " .. Player.UserId)
-Info:Addlabel("Account Age: " .. Player.AccountAge .. " days")
+Info:AddLabel("Account Age: " .. Player.AccountAge .. " days")
 Info:AddLabel("Executor: " .. executorName)
 Info:AddLabel("HWID: " .. HWID)
 
