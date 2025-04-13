@@ -519,7 +519,7 @@ function DeltaLib:CreateWindow(title, size)
 			end)
 
 			-- Change restore button back to minimize symbol
-			MinimizeButton.Text = "â€ "
+			MinimizeButton.Text = "-"
 		end
 	end)
 
@@ -1446,4 +1446,3 @@ function DeltaLib:CreateWindow(title, size)
 end
 
 return DeltaLib
-turn DeltaLib
