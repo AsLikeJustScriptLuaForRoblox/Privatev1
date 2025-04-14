@@ -37,7 +37,8 @@ local UserProfile = Window:AddUserProfile()
 
 local HomeTab = Window:CreateTab("Home")
 local FarmTab = Window:CreateTab("Auto Farm")
-local MiscTab = Window:CreateTab("Misc")
+local MiscTab = Window:CreateTab("Misc") 
+local Whygay = Window:CreateTab("Egg")
 
 -- HOME TAB
 local Info = HomeTab:CreateSection("Account Info")
@@ -149,6 +150,50 @@ makeCodeDropdown("Codes - Coins", {
 	"PSSong2", "PSGame52", "PSWord2", "PSDancer", "PSSmile2", "PSFree2"
 })
 
+-- Pets
+local EggSection = Whygay:CreateSection("Auto Hatch Eggs")
+
+local podsFolder = game:GetService("ReplicatedStorage"):WaitForChild("Assets"):WaitForChild("Pods")
+local eggList = {}
+for _, pod in ipairs(podsFolder:GetChildren()) do
+    table.insert(eggList, pod.Name)
+end
+
+local selectedEgg = eggList[1]
+EggSection:AddDropdown("Select Egg", eggList, selectedEgg, function(selected)
+    selectedEgg = selected
+end)
+
+EggSection:AddButton("Hatch Egg Once", function()
+    local shopService = game:GetService("ReplicatedStorage")
+        .Packages._Index["sleitnick_knit@1.7.0"].knit.Services.ShopService.RF.RequestPurchase
+    local args = {
+        PodName = selectedEgg,
+        Type = "PetPod"
+    }
+    pcall(function()
+        shopService:InvokeServer(args)
+    end)
+    playNotificationSound()
+end)
+
+EggSection:AddToggle("Auto Hatch Egg", false, function(didisex)
+    getgenv().AutoHatch = didisex
+    task.spawn(function()
+        local shopService = game:GetService("ReplicatedStorage")
+            .Packages._Index["sleitnick_knit@1.7.0"].knit.Services.ShopService.RF.RequestPurchase
+        while getgenv().AutoHatch and task.wait(1.5) do
+            local args = {
+                PodName = selectedEgg,
+                Type = "PetPod"
+            }
+            pcall(function()
+                shopService:InvokeServer(args)
+            end)
+        end
+    end)
+    playNotificationSound()
+end)
 -- MISC
 local Other = MiscTab:CreateSection("Performance / Utility")
 
