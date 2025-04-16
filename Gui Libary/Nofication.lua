@@ -1,75 +1,84 @@
-local library = {}
-library.Flags = {}
-library.DefaultColor = Color3.fromRGB(56, 207, 154)
+function library:Notification(NotificationInfo)
+    NotificationInfo.Title = NotificationInfo.Title or "Notification Title"
+    NotificationInfo.Text = NotificationInfo.Text or "This is a notification."
+    NotificationInfo.Duration = NotificationInfo.Duration or 5
+    NotificationInfo.Color = NotificationInfo.Color or library.DefaultColor
 
-local TweenService = game:GetService("TweenService")
+    -- Create Notification Text
+    local notificationText = Instance.new("TextLabel")
+    notificationText.Name = "NotificationText"
+    notificationText.ClipsDescendants = true
+    notificationText.Font = Enum.Font.GothamBold
+    notificationText.Text = NotificationInfo.Text
+    notificationText.TextColor3 = Color3.fromRGB(214, 214, 214)
+    notificationText.TextSize = 14
+    notificationText.BackgroundColor3 = Color3.fromRGB(29, 29, 29)
+    notificationText.BorderSizePixel = 0
+    notificationText.Position = UDim2.fromScale(0, 0.954)
+    notificationText.Size = UDim2.fromOffset(0, 38)
+    notificationText.Parent = Holder
 
--- Notification function
-function library:Notification(Info)
-    Info = Info or {}
-    Info.Title = Info.Title or "Notification"
-    Info.Text = Info.Text or "This is a notification."
-    Info.Duration = Info.Duration or 5 -- Default duration (in seconds)
+    -- Create Notification Title
+    local notificationTitle = Instance.new("TextLabel")
+    notificationTitle.Name = "NotificationTitle"
+    notificationTitle.Font = Enum.Font.GothamBold
+    notificationTitle.Text = NotificationInfo.Title
+    notificationTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    notificationTitle.TextSize = 16
+    notificationTitle.BackgroundTransparency = 1
+    notificationTitle.Position = UDim2.fromScale(0.05, 0.2)
+    notificationTitle.Size = UDim2.fromScale(0.9, 0.3)
+    notificationTitle.Parent = notificationText
 
-    -- Create ScreenGui
-    local gui = Instance.new("ScreenGui")
-    gui.Name = "NotificationGui"
-    gui.Parent = game:GetService("CoreGui")
+    -- Outer Frame for Progress Bar
+    local outerFrame = Instance.new("Frame")
+    outerFrame.Name = "OuterFrame"
+    outerFrame.AnchorPoint = Vector2.new(0, 1)
+    outerFrame.BackgroundColor3 = NotificationInfo.Color
+    outerFrame.BorderSizePixel = 0
+    outerFrame.Position = UDim2.fromScale(0, 1)
+    outerFrame.Size = UDim2.new(1, 0, 0, 3)
+    outerFrame.ZIndex = 2
+    outerFrame.Parent = notificationText
 
-    -- Create Notification Frame
-    local frame = Instance.new("Frame")
-    frame.Name = "NotificationFrame"
-    frame.Size = UDim2.new(0, 300, 0, 100)
-    frame.Position = UDim2.new(0.5, -150, 1, -120) -- Start off-screen
-    frame.BackgroundColor3 = Color3.fromRGB(36, 36, 36)
-    frame.AnchorPoint = Vector2.new(0.5, 0.5)
-    frame.Parent = gui
+    -- Notification UI Corner
+    local notificationUICorner = Instance.new("UICorner")
+    notificationUICorner.Name = "NotificationUICorner"
+    notificationUICorner.CornerRadius = UDim.new(0, 4)
+    notificationUICorner.Parent = notificationText
 
-    -- Add UICorner for rounded edges
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 10)
-    corner.Parent = frame
+    -- Inner Frame for Background
+    local innerFrame = Instance.new("Frame")
+    innerFrame.Name = "InnerFrame"
+    innerFrame.AnchorPoint = Vector2.new(0, 1)
+    innerFrame.BackgroundColor3 = Color3.fromRGB(38, 38, 38)
+    innerFrame.BorderSizePixel = 0
+    innerFrame.Position = UDim2.fromScale(0, 1)
+    innerFrame.Size = UDim2.new(1, 0, 0, 3)
+    innerFrame.Parent = notificationText
 
-    -- Add Title
-    local title = Instance.new("TextLabel")
-    title.Name = "Title"
-    title.Text = Info.Title
-    title.Font = Enum.Font.GothamBold
-    title.TextSize = 18
-    title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    title.BackgroundTransparency = 1
-    title.Size = UDim2.new(1, 0, 0.4, 0)
-    title.Parent = frame
+    -- Tween Animations
+    coroutine.wrap(function()
+        -- Tween for Notification Text (Slide In)
+        local InTween = TweenService:Create(notificationText, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {Size = UDim2.new(0, notificationText.TextBounds.X + 20, 0, 38)})
+        InTween:Play()
+        InTween.Completed:Wait()
 
-    -- Add Text
-    local text = Instance.new("TextLabel")
-    text.Name = "Text"
-    text.Text = Info.Text
-    text.Font = Enum.Font.Gotham
-    text.TextSize = 14
-    text.TextColor3 = Color3.fromRGB(200, 200, 200)
-    text.BackgroundTransparency = 1
-    text.Position = UDim2.new(0, 0, 0.4, 0)
-    text.Size = UDim2.new(1, 0, 0.6, 0)
-    text.Parent = frame
+        -- Tween for Notification Title (Fade In)
+        local TitleTween = TweenService:Create(notificationTitle, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0})
+        TitleTween:Play()
 
-    -- Slide-in animation
-    TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0.5, -150, 0.8, 0) -- Move into view
-    }):Play()
+        -- Progress Bar Animation
+        local LineTween = TweenService:Create(outerFrame, TweenInfo.new(NotificationInfo.Duration, Enum.EasingStyle.Linear, Enum.EasingDirection.In), {Size = UDim2.new(0, 0, 0, 3)})
+        LineTween:Play()
+        LineTween.Completed:Wait()
 
-    -- Auto-destroy after the duration
-    task.delay(Info.Duration, function()
-        -- Slide-out animation
-        TweenService:Create(frame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-            Position = UDim2.new(0.5, -150, 1, -120) -- Move out of view
-        }):Play()
+        -- Tween for Notification Text (Slide Out)
+        local OutTween = TweenService:Create(notificationText, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {Size = UDim2.new(0, 0, 0, 38)})
+        OutTween:Play()
+        OutTween.Completed:Wait()
 
-        -- Wait for animation to finish before destroying
-        task.delay(0.5, function()
-            gui:Destroy()
-        end)
-    end)
+        -- Cleanup
+        notificationText:Destroy()
+    end)()
 end
-
-return library
