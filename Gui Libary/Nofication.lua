@@ -1,127 +1,80 @@
--- Enhanced version of Revenant UI with rounded corners and smooth animation
 local library = {}
-library.Flags = {}
 library.DefaultColor = Color3.fromRGB(56, 207, 154)
 
-local Players = game:GetService("Players")
-local Player = Players.LocalPlayer
-local Mouse = Player:GetMouse()
 local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-
--- Rounded corner value
-local CornerRadius = UDim.new(0, 10)
-
--- Destroy duplicate UIs
-for _,v in pairs(game:GetService("CoreGui"):GetChildren()) do
-    if v.Name == "Revenant" then
-        v:Destroy()
-    end
-end
-
--- Utility function
-function library:GetXY(GuiObject)
-	local Max, May = GuiObject.AbsoluteSize.X, GuiObject.AbsoluteSize.Y
-	local Px, Py = math.clamp(Mouse.X - GuiObject.AbsolutePosition.X, 0, Max), math.clamp(Mouse.Y - GuiObject.AbsolutePosition.Y, 0, May)
-	return Px/Max, Py/May
-end
-
--- Window toggle
-function library:Toggle()
-    for _,v in pairs(game:GetService("CoreGui"):GetChildren()) do
-        if v.Name == "Revenant" then
-            v.Enabled = not v.Enabled
-        end
-    end
-end
 
 -- Function to apply UICorner
 local function applyCorner(gui)
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = CornerRadius
+    corner.CornerRadius = UDim.new(0, 10)
     corner.Parent = gui
 end
 
--- Window creation
-function library:Window(Info)
-    Info.Text = Info.Text or "Revenant"
-    local Pos = 0.05
+-- Notification function
+function library:Notification(Info)
+    Info.Text = Info.Text or "Notification"
+    Info.Title = Info.Title or "Title"
+    Info.Duration = Info.Duration or 5
 
-    for _,v in pairs(game:GetService("CoreGui"):GetChildren()) do
-        if v.Name == "Revenant" then
-            Pos = Pos + 0.12
-        end
-    end
+    local notificationGui = Instance.new("ScreenGui")
+    notificationGui.Name = "NotificationUI"
+    notificationGui.Parent = game:GetService("CoreGui")
 
-    local revenant = Instance.new("ScreenGui")
-    revenant.Name = "Revenant"
-    revenant.Parent = game:GetService("CoreGui")
+    local notificationFrame = Instance.new("Frame")
+    notificationFrame.Name = "NotificationFrame"
+    notificationFrame.BackgroundColor3 = library.DefaultColor
+    notificationFrame.Position = UDim2.new(0.5, -125, 1.2, 0) -- Start off-screen (below)
+    notificationFrame.Size = UDim2.new(0, 250, 0, 70)
+    notificationFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    notificationFrame.Parent = notificationGui
+    applyCorner(notificationFrame)
 
-    local WindowOpened = Instance.new("BoolValue", revenant)
-    WindowOpened.Value = true
+    local titleLabel = Instance.new("TextLabel")
+    titleLabel.Name = "TitleLabel"
+    titleLabel.Font = Enum.Font.GothamBold
+    titleLabel.Text = Info.Title
+    titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    titleLabel.TextSize = 16
+    titleLabel.BackgroundTransparency = 1
+    titleLabel.Position = UDim2.new(0, 0, 0, 5)
+    titleLabel.Size = UDim2.new(1, 0, 0, 20)
+    titleLabel.Parent = notificationFrame
 
-    local topbar = Instance.new("Frame")
-    topbar.Name = "Topbar"
-    topbar.BackgroundColor3 = Color3.fromRGB(29, 29, 29)
-    topbar.Position = UDim2.fromScale(Pos, 0.1)
-    topbar.Size = UDim2.fromOffset(225, 38)
-    topbar.Parent = revenant
-    applyCorner(topbar)
+    local notificationText = Instance.new("TextLabel")
+    notificationText.Name = "NotificationText"
+    notificationText.Font = Enum.Font.Gotham
+    notificationText.Text = Info.Text
+    notificationText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    notificationText.TextSize = 14
+    notificationText.BackgroundTransparency = 1
+    notificationText.Position = UDim2.new(0, 0, 0, 30)
+    notificationText.Size = UDim2.new(1, 0, 0, 40)
+    notificationText.Parent = notificationFrame
 
-    local backgroundFrame = Instance.new("Frame")
-    backgroundFrame.Name = "BackgroundFrame"
-    backgroundFrame.BackgroundColor3 = Color3.fromRGB(36, 36, 36)
-    backgroundFrame.Position = UDim2.fromScale(0, 1)
-    backgroundFrame.Size = UDim2.fromOffset(225, 0)
-    backgroundFrame.ClipsDescendants = true
-    backgroundFrame.Parent = topbar
-    applyCorner(backgroundFrame)
+    -- Show animation (moving from below)
+    TweenService:Create(notificationFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Position = UDim2.new(0.5, -125, 0.9, 0) -- Final position
+    }):Play()
 
-    local windowText = Instance.new("TextLabel")
-    windowText.Name = "WindowText"
-    windowText.Font = Enum.Font.GothamBold
-    windowText.Text = Info.Text
-    windowText.TextColor3 = Color3.fromRGB(214, 214, 214)
-    windowText.TextSize = 14
-    windowText.BackgroundTransparency = 1
-    windowText.Size = UDim2.fromOffset(225, 38)
-    windowText.Parent = topbar
-
-    local close = Instance.new("ImageButton")
-    close.Name = "Close"
-    close.Image = "rbxassetid://7733717447"
-    close.BackgroundTransparency = 1
-    close.Position = UDim2.fromScale(0.876, 0.263)
-    close.Size = UDim2.fromOffset(17, 17)
-    close.Parent = topbar
-
-    -- Add open/close animation
-    close.MouseButton1Click:Connect(function()
-        WindowOpened.Value = not WindowOpened.Value
-        backgroundFrame.ClipsDescendants = not WindowOpened.Value
-
-        if WindowOpened.Value then
-            backgroundFrame.Visible = true
-            backgroundFrame.Size = UDim2.new(0, 225, 0, 0)
-            backgroundFrame.BackgroundTransparency = 1
-            TweenService:Create(backgroundFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                Size = UDim2.new(0, 225, 0, 150),
-                BackgroundTransparency = 0
-            }):Play()
-        else
-            TweenService:Create(backgroundFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-                Size = UDim2.new(0, 225, 0, 0),
-                BackgroundTransparency = 1
-            }):Play()
-            task.delay(0.3, function() backgroundFrame.Visible = false end)
-        end
-
-        TweenService:Create(close, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
-            Rotation = WindowOpened.Value and 0 or 180
+    -- Fade out and destroy after duration
+    task.delay(Info.Duration, function()
+        -- Fade out animation
+        TweenService:Create(notificationFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            Position = UDim2.new(0.5, -125, 1.2, 0), -- Move back below the screen
+            BackgroundTransparency = 1
         }):Play()
-    end)
+        TweenService:Create(titleLabel, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            TextTransparency = 1
+        }):Play()
+        TweenService:Create(notificationText, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+            TextTransparency = 1
+        }):Play()
 
-    return {}
+        -- Destroy after animation
+        task.delay(0.5, function()
+            notificationGui:Destroy()
+        end)
+    end)
 end
 
 return library
